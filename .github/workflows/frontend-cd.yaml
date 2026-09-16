@@ -9,12 +9,90 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  lint:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.14'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: starter/frontend/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('starter/frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        working-directory: starter/frontend
+        run: npm ci
+
+      - name: Run lint
+        working-directory: starter/frontend
+        run: npm run lint
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.14'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: starter/frontend/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('starter/frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        working-directory: starter/frontend
+        run: npm ci
+
+      - name: Run tests
+        working-directory: starter/frontend
+        run: CI=true npm test
+
+  build:
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.14'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: starter/frontend/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('starter/frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        working-directory: starter/frontend
+        run: npm ci
+
+      - name: Run tests
+        working-directory: starter/frontend
+        run: CI=true npm test
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -31,13 +109,29 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
+          REACT_APP_MOVIE_API_URL: http://a1a31c9b219e548fc9d638625e09fd7e-2018849668.us-east-1.elb.amazonaws.com
         run: |
           docker build \
-            --build-arg REACT_APP_MOVIE_API_URL=http://a1a31c9b219e548fc9d638625e09fd7e-2018849668.us-east-1.elb.amazonaws.com \
+            --build-arg REACT_APP_MOVIE_API_URL=$REACT_APP_MOVIE_API_URL \
             --tag $ECR_REGISTRY/frontend:$IMAGE_TAG \
             starter/frontend
 
           docker push $ECR_REGISTRY/frontend:$IMAGE_TAG
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
 
       - name: Configure kubectl
         run: |
@@ -45,7 +139,7 @@ jobs:
 
       - name: Deploy frontend to EKS
         env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REGISTRY: 777147870303.dkr.ecr.us-east-1.amazonaws.com
           IMAGE_TAG: ${{ github.sha }}
         run: |
           cd starter/frontend/k8s
