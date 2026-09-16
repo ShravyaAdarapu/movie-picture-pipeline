@@ -1,3 +1,7 @@
+# For reviewer
+1. All the screenshots are in the screenshot folder
+2. URL: http://a981f20c0b899423aafd68274d42bde0-305905785.us-east-1.elb.amazonaws.com/
+
 # Movie Picture Pipeline
 
 You've been brought on as the DevOps resource for a development team that manages a web application that is a catalog of Movie Picture movies. They're in dire need of automating their development workflows in hopes of accelerating their release cycle. They'd like to use Github Actions to automate testing, building and deploying their applications to an existing Kubernetes cluster.
