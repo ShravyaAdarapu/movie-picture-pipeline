@@ -1,6 +1,9 @@
 # For reviewer
 1. All the screenshots are in the screenshot folder
-2. URL: http://a981f20c0b899423aafd68274d42bde0-305905785.us-east-1.elb.amazonaws.com/
+2. Frontend URL [Application]: 
+http://a981f20c0b899423aafd68274d42bde0-305905785.us-east-1.elb.amazonaws.com/
+3. Backend LoadBalancer URL [Backend `/movies` API]: 
+http://a1a31c9b219e548fc9d638625e09fd7e-2018849668.us-east-1.elb.amazonaws.com/movies
 
 # Movie Picture Pipeline
 
